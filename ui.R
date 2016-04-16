@@ -16,22 +16,31 @@ shinyUI(navbarPage(
     title = ("Raw data table"),
     
     # Sidebar with a slider input for number of bins
-    sidebarLayout(
-      sidebarPanel(
-        fileInput(
-          "CSVfile",
-          "Input CSV:",
-          accept=c('text/csv')),
-        width = 3
-        ),
+    fluidRow(
       
+      column(
+          fileInput(
+            "CSVfile",
+            "Input CSV:",
+            accept=c('text/csv')),
+          width = 6
+        )
+        
+      ),
+
       # Show a plot of the generated distribution
-      mainPanel(
-        dataTableOutput("rawTable")
-        #plotOutput("volcanoPlot")
+    fluidRow(
+      
+      column(
+        mainPanel(
+          dataTableOutput("rawTable")
+          #plotOutput("volcanoPlot")
+          ),
+        width = 12
         )
       
       )
+    
     ),
   
   tabPanel(
