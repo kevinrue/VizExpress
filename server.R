@@ -4,8 +4,9 @@
 #
 # http://shiny.rstudio.com
 #
-library(DT)
+
 library(shiny)
+library(DT)
 library(ggplot2)
 
 shinyServer(function(input, output) {
