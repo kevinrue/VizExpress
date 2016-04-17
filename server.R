@@ -101,7 +101,7 @@ shinyServer(function(input, output, clientData, session) {
     
     # Guess logFC column by name
     pval.colname <- colnames(raw.data())[grep(
-      pattern = "p.?val(ue)?",
+      pattern = paste0(c("p.?val(ue)?", p.adjust.methods), collapse = "|"),
       x = tolower(colnames(raw.data())))[1]]
     # Otherwise, assume logFC column is the one with values between 0 and 1
     # with the most values close to 1
