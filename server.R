@@ -13,15 +13,16 @@ shinyServer(function(input, output, clientData, session) {
   
   observe({
     
-    c_label <- input$control_label
-    c_num <- input$control_num
-    
-    # Text =====================================================
-    # Change both the label and the text
     updateSelectInput(
       session, "volcano.logFC",
       choices = data.numCols(),
       selected = FC.default()
+    )
+    
+    updateSelectInput(
+      session, "volcano.pval",
+      choices = data.numCols(),
+      selected = pval.default()
     )
   
   })
@@ -139,7 +140,7 @@ shinyServer(function(input, output, clientData, session) {
       data = data.NA(),
       mapping = aes_string(
         x = input$volcano.logFC,
-        y = paste("-log10(",pval.default(),")", sep = ""))) +
+        y = paste("-log10(",input$volcano.pval,")", sep = ""))) +
       geom_point(
         colour = as.numeric(data.NA()[,"padj"] <= input$FDR) + 1,
         size = 2) +
@@ -149,7 +150,8 @@ shinyServer(function(input, output, clientData, session) {
         check_overlap = TRUE) +
       ggtitle(dataset.name()) +
       scale_x_continuous(limits = xlimits) +
-      xlab(input$volcano.logFC)
+      xlab(input$volcano.logFC) +
+      ylab(paste("-log10(",input$volcano.pval,")"))
 
   })
   

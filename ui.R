@@ -68,6 +68,11 @@ shinyUI(navbarPage(
         selectInput(
           "volcano.logFC",
           "Column for logFC",
+          choices = c()),
+        
+        selectInput(
+          "volcano.pval",
+          "Column for P-value",
           choices = c())
         
         ),
