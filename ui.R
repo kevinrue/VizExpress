@@ -23,7 +23,13 @@ shinyUI(navbarPage(
             "CSVfile",
             "Input CSV:",
             accept=c('text/csv')),
-          width = 6
+          width = 3
+        ),
+      
+      column(
+        h3("Data set:"),
+        textOutput("datasetName"),
+        width = 9
         )
         
       ),
@@ -51,14 +57,6 @@ shinyUI(navbarPage(
     sidebarLayout(
       sidebarPanel(
         
-        sliderInput(
-          "FDR",
-          "FDR:",
-          min = 0,
-          max = 1,
-          value = 0.05,
-          step = 0.01),
-        
         checkboxInput(
           "symmetric",
           "Symmetric X axis?",
@@ -73,7 +71,20 @@ shinyUI(navbarPage(
         selectInput(
           "volcano.pval",
           "Column for P-value",
-          choices = c())
+          choices = c()),
+        
+        selectInput(
+          "volcano.padj",
+          "Column for adjusted P-value",
+          choices = c()),
+        
+        sliderInput(
+          "FDR",
+          "Adjusted P-value:",
+          min = 0,
+          max = 1,
+          value = 0.05,
+          step = 0.01)
         
         ),
         

@@ -24,6 +24,12 @@ shinyServer(function(input, output, clientData, session) {
       choices = data.numCols(),
       selected = pval.default()
     )
+    
+    updateSelectInput(
+      session, "volcano.padj",
+      choices = data.numCols(),
+      selected = padj.default()
+    )
   
   })
     
@@ -33,10 +39,17 @@ shinyServer(function(input, output, clientData, session) {
     message("Reading CSV:", infile$datapath)
     if (is.null(infile)) {
       # User has not uploaded a file yet
-      return(NULL)
+      return(sample.datasetName)
+    } else{
+      return(
+        gsub(pattern = '\\.csv$', replacement = '', x = infile$name))
     }
     
-    infile$datapath
+  })
+  
+  output$datasetName <- renderText({
+    
+    dataset.name()
     
   })
   
@@ -45,8 +58,8 @@ shinyServer(function(input, output, clientData, session) {
     infile <- input$CSVfile
     message("Reading CSV:", infile$datapath)
     if (is.null(infile)) {
-      # User has not uploaded a file yet
-      return(NULL)
+      # Randomly generated sample data set
+      return(sample.data)
     }
     
     read.csv(infile$datapath)
@@ -59,13 +72,18 @@ shinyServer(function(input, output, clientData, session) {
     
   })
   
+  data.charCols <- reactive({
+    
+    names(which(lapply(X = raw.data(), FUN = class) == "character"))
+    
+  })
+  
   FC.default <- reactive({
     
     # Guess logFC column by name
-    FC.colname <- grep(
-      pattern = "[Ll]og[Ff]2{0,1}[Cc]|[Ff]old[Cc]hange",
-      x = colnames(raw.data()),
-      value = TRUE)[1]
+    FC.colname <- colnames(raw.data())[grep(
+      pattern = "(log)?[[:digit:]]*f(old)?c(change)?",
+      x = tolower(colnames(raw.data())))[1]]
     # Otherwise, assume logFC column is the one with most symmetrical values
     if (length(FC.colname) == 0){
       sumMinMax <- lapply(
@@ -82,10 +100,9 @@ shinyServer(function(input, output, clientData, session) {
   pval.default <- reactive({
     
     # Guess logFC column by name
-    pval.colname <- grep(
-      pattern = "[Pp][\\.]{0,1}[Vv]al(ue){0,1}",
-      x = colnames(raw.data()),
-      value = TRUE)[1]
+    pval.colname <- colnames(raw.data())[grep(
+      pattern = "p.?val(ue)?",
+      x = tolower(colnames(raw.data())))[1]]
     # Otherwise, assume logFC column is the one with values between 0 and 1
     # with the most values close to 1
     if (length(pval.colname) == 0){
@@ -110,6 +127,55 @@ shinyServer(function(input, output, clientData, session) {
     
   })
   
+  padj.default <- reactive({
+    
+    # Guess logFC column by name
+    padj.colname <- colnames(raw.data())[grep(
+      pattern = "p?adj(usted)?p?",
+      x = tolower(colnames(raw.data())))[1]]
+    # Otherwise, assume Padj column is the one with values between 0 and 1
+    # with the most values close to 0
+    if (length(padj.colname) == 0){
+      if (length(data.numCols()) > 0){
+        ranges <- do.call("rbind", lapply(
+          X = raw.data()[,data.numCols()],
+          FUN = range,
+          na.rm = TRUE))
+        ranges.ZeroOne <- which(ranges[,1] >= 0 & ranges[,2] <= 1)
+        if (length(ranges.ZeroOne) > 1){
+          # Pick the one with the largest number of values close to 0
+          pval.sum <- colSums(raw.data[,ranges.ZeroOne], na.rm = TRUE)
+          padj.colname <- colnames(raw.data[,ranges.ZeroOne])[
+            which.min(pval.sum)]
+        } else {
+          padj.colname <- names(ranges.ZeroOne)
+        }
+      }
+    }
+    
+    padj.colname
+    
+  })
+  
+  symbol.default <- reactive({
+    
+    # Guess logFC column by name
+    symbol.colname <- colnames(raw.data())[grep(
+      pattern = "symbol|gene|name",
+      x = tolower(colnames(raw.data())))[1]]
+    # Otherwise, assume symbol column is the one with unique character values
+    if (length(symbol.colname) == 0){
+      unique <- lapply(
+        X = data.NA()[,data.charCols()],
+        FUN = function(x){length(unique(x)) == length(x)})
+      symbol.colname <- colnames(raw.data())[unique[1]]
+    }
+    
+    message("symbol.colname:", symbol.colname)
+    symbol.colname
+    
+  })
+  
   data.NA <- reactive({
     
     raw.data()[!is.na(raw.data()[,"padj"]),]
@@ -130,10 +196,15 @@ shinyServer(function(input, output, clientData, session) {
   
   output$volcanoPlot <- renderPlot({
     
+    # print(dimnames(data.NA()))
+    # message("input$volcano.logFC: ", input$volcano.logFC)
+    # message("input$volcano.pval: ", input$volcano.pval)
+    # message("input$FDR: ", input$FDR)
+    message("dataset.name: ", input$dataset.name)
     if (input$symmetric){
-      xlimits <- rep(max(abs(data.NA()[,FC.default()]))) * c(-1, 1)
+      xlimits <- rep(max(abs(data.NA()[,input$volcano.logFC]))) * c(-1, 1)
     } else {
-      xlimits <- range(data.NA()[,FC.default()])
+      xlimits <- range(data.NA()[,input$volcano.logFC])
     }
     
     ggplot(
@@ -142,10 +213,10 @@ shinyServer(function(input, output, clientData, session) {
         x = input$volcano.logFC,
         y = paste("-log10(",input$volcano.pval,")", sep = ""))) +
       geom_point(
-        colour = as.numeric(data.NA()[,"padj"] <= input$FDR) + 1,
+        colour = as.numeric(data.NA()[,input$volcano.padj] <= input$FDR) + 1,
         size = 2) +
       geom_text(
-        data = data.NA()[data.NA()[,"padj"] <= input$FDR,],
+        data = data.NA()[data.NA()[,input$volcano.padj] <= input$FDR,],
         mapping = aes_string(label = "SYMBOL"),
         check_overlap = TRUE) +
       ggtitle(dataset.name()) +
