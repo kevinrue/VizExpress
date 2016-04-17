@@ -51,14 +51,6 @@ shinyUI(navbarPage(
     sidebarLayout(
       sidebarPanel(
         
-        sliderInput(
-          "FDR",
-          "FDR:",
-          min = 0,
-          max = 1,
-          value = 0.05,
-          step = 0.01),
-        
         checkboxInput(
           "symmetric",
           "Symmetric X axis?",
@@ -73,7 +65,15 @@ shinyUI(navbarPage(
         selectInput(
           "volcano.pval",
           "Column for P-value",
-          choices = c())
+          choices = c()),
+        
+        sliderInput(
+          "FDR",
+          "Adjusted P-value:",
+          min = 0,
+          max = 1,
+          value = 0.05,
+          step = 0.01)
         
         ),
         

@@ -33,10 +33,10 @@ shinyServer(function(input, output, clientData, session) {
     message("Reading CSV:", infile$datapath)
     if (is.null(infile)) {
       # User has not uploaded a file yet
-      return(NULL)
+      return(sample.datasetName)
+    } else{
+      return(infile$name)
     }
-    
-    infile$datapath
     
   })
   
@@ -45,8 +45,8 @@ shinyServer(function(input, output, clientData, session) {
     infile <- input$CSVfile
     message("Reading CSV:", infile$datapath)
     if (is.null(infile)) {
-      # User has not uploaded a file yet
-      return(NULL)
+      # Randomly generated sample data set
+      return(sample.data)
     }
     
     read.csv(infile$datapath)
@@ -63,7 +63,7 @@ shinyServer(function(input, output, clientData, session) {
     
     # Guess logFC column by name
     FC.colname <- grep(
-      pattern = "[Ll]og[Ff]2{0,1}[Cc]|[Ff]old[Cc]hange",
+      pattern = "[Ll]og2{0,1}[Ff][Cc]|[Ff]old[Cc]hange",
       x = colnames(raw.data()),
       value = TRUE)[1]
     # Otherwise, assume logFC column is the one with most symmetrical values
@@ -130,10 +130,15 @@ shinyServer(function(input, output, clientData, session) {
   
   output$volcanoPlot <- renderPlot({
     
+    # print(dimnames(data.NA()))
+    # message("input$volcano.logFC: ", input$volcano.logFC)
+    # message("input$volcano.pval: ", input$volcano.pval)
+    # message("input$FDR: ", input$FDR)
+    message("dataset.name: ", input$dataset.name)
     if (input$symmetric){
-      xlimits <- rep(max(abs(data.NA()[,FC.default()]))) * c(-1, 1)
+      xlimits <- rep(max(abs(data.NA()[,input$volcano.logFC]))) * c(-1, 1)
     } else {
-      xlimits <- range(data.NA()[,FC.default()])
+      xlimits <- range(data.NA()[,input$volcano.logFC])
     }
     
     ggplot(
