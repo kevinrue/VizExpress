@@ -1,11 +1,15 @@
 
+library(shiny)
+library(shiny)
+library(DT)
+library(ggplot2)
+
 # Random data set before CSV is provided
-log2FC <- rnorm(n = 10E3, mean = 0, sd = 2)
+log2FC <- rnorm(n = 10E3, mean = 0, sd = 1)
 log2FC <- log2FC[order(abs(log2FC), decreasing = TRUE)]
 
 Pvalue <- c(
-  runif(n = 100, min = 0, max = 0.05),
-  runif(n = 9900, min = 0, max = 1)
+  runif(n = 10E3, min = 0, max = 1)
 )
 Pvalue <- Pvalue[order(Pvalue)]
 

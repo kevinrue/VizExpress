@@ -5,10 +5,6 @@
 # http://shiny.rstudio.com
 #
 
-library(shiny)
-library(DT)
-library(ggplot2)
-
 shinyServer(function(input, output, clientData, session) {
   
   observe({
@@ -168,10 +164,18 @@ shinyServer(function(input, output, clientData, session) {
   symbol.default <- reactive({
     
     # Guess logFC column by name
+    # Prefer a column including "symbol"
     symbol.colname <- colnames(raw.data())[grep(
-      pattern = "symbol|gene|name",
+      pattern = "symbol",
       x = tolower(colnames(raw.data())))[1]]
-    # Otherwise, assume symbol column is the one with unique character values
+    # A few alternatives
+    if (length(symbol.colname) == 0){
+      symbol.colname <- colnames(raw.data())[grep(
+        pattern = "gene|name",
+        x = tolower(colnames(raw.data())))[1]]
+    }
+    # Otherwise, assume symbol column is the first one
+    # with unique character values
     if (length(symbol.colname) == 0){
       unique <- lapply(
         X = data.NA()[,data.charCols()],
@@ -209,17 +213,10 @@ shinyServer(function(input, output, clientData, session) {
   
   output$volcanoPlot <- renderPlot({
     
-    # print(dimnames(data.NA()))
-    # message("input$volcano.logFC: ", input$volcano.logFC)
-    # message("input$volcano.pval: ", input$volcano.pval)
-    # message("input$FDR: ", input$FDR)
-    # message("dataset.name: ", input$dataset.name)
-    # message("data.charCols: ", data.charCols())
-    # message("input$volcano.symbol: ", input$volcano.symbol)
     if (input$symmetric){
-      xlimits <- rep(max(abs(data.NA()[,input$volcano.logFC]))) * c(-1, 1)
+      xlimits <- rep(max(abs(data.NA()[,input$volcano.logFC]))) * c(-1.05, 1.05)
     } else {
-      xlimits <- range(data.NA()[,input$volcano.logFC])
+      xlimits <- range(data.NA()[,input$volcano.logFC]) * 1.05
     }
     
     gg <- ggplot(
@@ -230,13 +227,15 @@ shinyServer(function(input, output, clientData, session) {
       geom_point(
         colour = as.numeric(data.NA()[,input$volcano.padj] <= input$FDR) + 1,
         size = 2) +
-      ggtitle(dataset.name()) +
+      ggtitle("Volcano plot") +
       scale_x_continuous(limits = xlimits) +
-      xlab(input$volcano.logFC) +
-      ylab(paste("-log10(",input$volcano.pval,")"))
-    
-    print(str(input$volcano.symbol))
-    print(str(input$volcano.padj))
+      xlab("log (fold-change)") +
+      ylab(expression(-log[10]*" (unadjusted "*italic("P")*"-"*value*")")) +
+      theme(
+        axis.text = element_text(size = rel(1.25)),
+        title = element_text(size = rel(1.5))
+      )
+
     if (!input$volcano.symbol == volcano.symbol.none){
       gg <- gg +
         geom_text(
@@ -249,6 +248,43 @@ shinyServer(function(input, output, clientData, session) {
 
   })
   
-
+  output$QQplot <- renderPlot({
+    
+    qq.data <- cbind(
+      data.NA()[order(data.NA()[,input$volcano.pval]),],
+      expected = sort(runif(n = nrow(data.NA()), min = 0, max = 1)))
+    
+    gg <- ggplot(
+      data = qq.data,
+      mapping = aes_string(
+          x = "-log10(expected)",
+          y = paste("-log10(",input$volcano.pval,")", sep = ""))) +
+      geom_point(
+        colour = as.numeric(qq.data[,input$volcano.padj] <= input$FDR) + 1,
+        size = 2) +
+      geom_abline(slope = 1, intercept = 0, colour = "red") +
+      ggtitle("QQ plot") +
+      xlab(expression(Expected*" "*"-"*log[10]*" ( unadjusted "*italic(P)*"-"*value*")")) +
+      ylab(expression(Observed*" "*"-"*log[10]*" ( unadjusted "*italic(P)*"-"*value*")")) +
+      scale_x_continuous(
+        limits = range(-log10(qq.data[,"expected"]) * 1.05)) +
+      scale_y_continuous(
+        limits = range(-log10(qq.data[,input$volcano.pval]) * 1.05)) +
+      theme(
+        axis.text = element_text(size = rel(1.25)),
+        title = element_text(size = rel(1.5))
+        )
+    
+    if (!input$volcano.symbol == volcano.symbol.none){
+      gg <- gg +
+        geom_text(
+          data = qq.data[qq.data[,input$volcano.padj] <= input$FDR,],
+          mapping = aes_string(label = input$volcano.symbol),
+          check_overlap = TRUE)
+    }
+    
+    gg
+    
+  })
 
 })

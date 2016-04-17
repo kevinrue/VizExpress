@@ -5,8 +5,6 @@
 # http://shiny.rstudio.com
 #
 
-library(shiny)
-
 shinyUI(navbarPage(
 
   title = "VizExpress",
@@ -15,7 +13,6 @@ shinyUI(navbarPage(
     
     title = ("Raw data table"),
     
-    # Sidebar with a slider input for number of bins
     fluidRow(
       
       column(
@@ -34,13 +31,11 @@ shinyUI(navbarPage(
         
       ),
 
-      # Show a plot of the generated distribution
     fluidRow(
       
       column(
         mainPanel(
           dataTableOutput("rawTable")
-          #plotOutput("volcanoPlot")
           ),
         width = 12
         )
@@ -51,9 +46,8 @@ shinyUI(navbarPage(
   
   tabPanel(
     
-    title = "Volcano plot",
-    
-    # Sidebar with a slider input for number of bins
+    title = "Volcano / QQ",
+
     sidebarLayout(
       sidebarPanel(
         
@@ -93,9 +87,10 @@ shinyUI(navbarPage(
         
         ),
         
-        # Show a plot of the generated distribution
         mainPanel(
           plotOutput("volcanoPlot"),
+          tags$hr(),
+          plotOutput("QQplot"),
           width = 6
           )
         )
