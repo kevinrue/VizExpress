@@ -84,14 +84,18 @@ shinyUI(navbarPage(
           min = 0,
           max = 1,
           value = 0.05,
-          step = 0.01)
+          step = 0.01),
+        
+        selectInput(
+          "volcano.symbol",
+          "Column for gene symbol",
+          choices = c())
         
         ),
         
         # Show a plot of the generated distribution
         mainPanel(
           plotOutput("volcanoPlot"),
-          #plotOutput("volcanoPlot")
           width = 6
           )
         )

@@ -30,6 +30,12 @@ shinyServer(function(input, output, clientData, session) {
       choices = data.numCols(),
       selected = padj.default()
     )
+    
+    updateSelectInput(
+      session, "volcano.symbol",
+      choices = c(volcano.symbol.none, data.charCols()),
+      selected = symbol.default()
+    )
   
   })
     
@@ -62,7 +68,7 @@ shinyServer(function(input, output, clientData, session) {
       return(sample.data)
     }
     
-    read.csv(infile$datapath)
+    read.csv(file = infile$datapath, stringsAsFactors = FALSE)
     
   })
   
@@ -123,6 +129,7 @@ shinyServer(function(input, output, clientData, session) {
       }
     }
     
+    message("pval.colname:", pval.colname)
     pval.colname
     
   })
@@ -153,6 +160,7 @@ shinyServer(function(input, output, clientData, session) {
       }
     }
     
+    message("padj.colname:", padj.colname)
     padj.colname
     
   })
@@ -168,7 +176,12 @@ shinyServer(function(input, output, clientData, session) {
       unique <- lapply(
         X = data.NA()[,data.charCols()],
         FUN = function(x){length(unique(x)) == length(x)})
-      symbol.colname <- colnames(raw.data())[unique[1]]
+      if (length(unique) > 1){
+        symbol.colname <- colnames(raw.data())[unique[1]]
+      }
+      else{
+        symbol.colname <- NA
+      }
     }
     
     message("symbol.colname:", symbol.colname)
@@ -178,7 +191,7 @@ shinyServer(function(input, output, clientData, session) {
   
   data.NA <- reactive({
     
-    raw.data()[!is.na(raw.data()[,"padj"]),]
+    raw.data()[!is.na(raw.data()[,input$volcano.padj]),]
     
   })
   
@@ -200,14 +213,16 @@ shinyServer(function(input, output, clientData, session) {
     # message("input$volcano.logFC: ", input$volcano.logFC)
     # message("input$volcano.pval: ", input$volcano.pval)
     # message("input$FDR: ", input$FDR)
-    message("dataset.name: ", input$dataset.name)
+    # message("dataset.name: ", input$dataset.name)
+    # message("data.charCols: ", data.charCols())
+    # message("input$volcano.symbol: ", input$volcano.symbol)
     if (input$symmetric){
       xlimits <- rep(max(abs(data.NA()[,input$volcano.logFC]))) * c(-1, 1)
     } else {
       xlimits <- range(data.NA()[,input$volcano.logFC])
     }
     
-    ggplot(
+    gg <- ggplot(
       data = data.NA(),
       mapping = aes_string(
         x = input$volcano.logFC,
@@ -215,14 +230,22 @@ shinyServer(function(input, output, clientData, session) {
       geom_point(
         colour = as.numeric(data.NA()[,input$volcano.padj] <= input$FDR) + 1,
         size = 2) +
-      geom_text(
-        data = data.NA()[data.NA()[,input$volcano.padj] <= input$FDR,],
-        mapping = aes_string(label = "SYMBOL"),
-        check_overlap = TRUE) +
       ggtitle(dataset.name()) +
       scale_x_continuous(limits = xlimits) +
       xlab(input$volcano.logFC) +
       ylab(paste("-log10(",input$volcano.pval,")"))
+    
+    print(str(input$volcano.symbol))
+    print(str(input$volcano.padj))
+    if (!input$volcano.symbol == volcano.symbol.none){
+      gg <- gg +
+        geom_text(
+          data = data.NA()[data.NA()[,input$volcano.padj] <= input$FDR,],
+          mapping = aes_string(label = input$volcano.symbol),
+          check_overlap = TRUE)
+    }
+    
+    gg
 
   })
   

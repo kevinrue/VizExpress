@@ -16,7 +16,10 @@ sample.data <- data.frame(
   log2FC = log2FC,
   Pvalue = Pvalue,
   padj = padj,
-  SYMBOL = SYMBOL
+  SYMBOL = SYMBOL,
+  stringsAsFactors = FALSE
 )
 
 sample.datasetName <- "Randomly generated data"
+
+volcano.symbol.none <- "None"
