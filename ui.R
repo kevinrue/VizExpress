@@ -63,7 +63,12 @@ shinyUI(navbarPage(
           "symmetric",
           "Symmetric X axis?",
           value = TRUE
-        )
+        ),
+        
+        selectInput(
+          "volcano.logFC",
+          "Column for logFC",
+          choices = c())
         
         ),
         
