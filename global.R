@@ -1,6 +1,5 @@
 
 library(shiny)
-library(shiny)
 library(DT)
 library(ggplot2)
 
