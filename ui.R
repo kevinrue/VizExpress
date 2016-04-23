@@ -5,49 +5,68 @@
 # http://shiny.rstudio.com
 #
 
+source("uiFunctions.R")
+
 shinyUI(navbarPage(
 
   title = "VizExpress",
   
   tabPanel(
-    
-    title = ("Raw data table"),
-    
+    title = "Welcome!",
     fluidRow(
-      
       column(
-          fileInput(
-            "CSVfile",
-            "Input CSV:",
-            accept=c('text/csv')),
-          width = 3
-        ),
-      
+        3,
+        wellPanel(
+          radioButtons(
+            "type_input",
+            label = h3("Input type"),
+            choices = list(
+              "Differential expression" = 1,
+              "Expression" = 2), 
+            selected = 1),
+          hr(),
+          checkboxInput(
+            "multiple_input",
+            label = "Multiple files?",
+            value = FALSE
+            )
+          )
+        )
+      )
+    ),
+  
+  tabPanel(
+    title = "Input",
+    fluidRow(
+      column(
+        3,
+        wellPanel(
+          conditionalPanel(
+            "input.multiple_input == false",
+            singleFileInput("input_file")
+          ),
+          conditionalPanel(
+            "input.multiple_input == true",
+            multipleFilesInput("input_files")
+          )
+        )
+      ),
       column(
         h3("Data set:"),
         textOutput("datasetName"),
         width = 9
-        )
-        
-      ),
-
-    fluidRow(
-      
-      column(
-        mainPanel(
-          dataTableOutput("rawTable")
-          ),
-        width = 12
-        )
-      
       )
-    
     ),
+    fluidRow(
+      column(
+        dataTableOutput("rawTable"),
+        width = 12
+      )
+    )
+  ),
   
   tabPanel(
-    
-    title = "Volcano / QQ",
-
+    title = "Plots",
     sidebarLayout(
       sidebarPanel(
         
@@ -84,16 +103,15 @@ shinyUI(navbarPage(
           "volcano.symbol",
           "Column for gene symbol",
           choices = c())
-        
         ),
-        
-        mainPanel(
-          plotOutput("volcanoPlot"),
-          tags$hr(),
-          plotOutput("QQplot"),
-          width = 6
-          )
+      
+      mainPanel(
+        plotOutput("volcanoPlot"),
+        tags$hr(),
+        plotOutput("QQplot"),
+        width = 5
         )
       )
+    )
   
   ))
