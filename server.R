@@ -12,26 +12,26 @@ shinyServer(function(input, output, clientData, session) {
   observe({
     
     updateSelectInput(
-      session, "volcano.logFC",
+      session, "volcano_logFC",
       choices = data.numCols(),
       selected = FC.default()
     )
     
     updateSelectInput(
-      session, "volcano.pval",
+      session, "volcano_pval",
       choices = data.numCols(),
       selected = pval.default()
     )
     
     updateSelectInput(
-      session, "volcano.padj",
+      session, "volcano_padj",
       choices = data.numCols(),
       selected = padj.default()
     )
     
     updateSelectInput(
-      session, "volcano.symbol",
-      choices = c(volcano.symbol.none, data.charCols()),
+      session, "volcano_symbol",
+      choices = c(volcanoSymbolNone, data.charCols()),
       selected = symbol.default()
     )
     
@@ -183,7 +183,7 @@ shinyServer(function(input, output, clientData, session) {
 
   data.NA <- reactive({
 
-    single.rawdata()[!is.na(single.rawdata()[,input$volcano.padj]),]
+    single.rawdata()[!is.na(single.rawdata()[,input$volcano_padj]),]
 
   })
 
@@ -202,20 +202,22 @@ shinyServer(function(input, output, clientData, session) {
   output$volcanoPlot <- renderPlot({
 
     if (input$symmetric){
-      xlimits <- rep(max(abs(data.NA()[,input$volcano.logFC]))) * c(-1.05, 1.05)
+      xlimits <- rep(max(abs(data.NA()[,input$volcano_logFC]))) * c(-1.05, 1.05)
     } else {
-      xlimits <- range(data.NA()[,input$volcano.logFC]) * 1.05
+      xlimits <- range(data.NA()[,input$volcano_logFC]) * 1.05
     }
 
     gg <- ggplot(
       data = data.NA(),
       mapping = aes_string(
-        x = input$volcano.logFC,
-        y = paste("-log10(",input$volcano.pval,")", sep = ""))) +
+        x = input$volcano_logFC,
+        y = paste("-log10(",input$volcano_pval,")", sep = ""))) +
       geom_point(
-        colour = as.numeric(data.NA()[,input$volcano.padj] <= input$FDR) + 1,
+        colour = as.numeric(data.NA()[,input$volcano_padj] <= input$FDR) + 1,
         size = 2) +
-      ggtitle("Volcano plot") +
+      ggtitle(paste(
+        "Volcano plot",
+        input$dataset_name, sep = "\n")) +
       scale_x_continuous(limits = xlimits) +
       xlab("log (fold-change)") +
       ylab(expression(-log[10]*" (unadjusted "*italic("P")*"-"*value*")")) +
@@ -224,11 +226,11 @@ shinyServer(function(input, output, clientData, session) {
         title = element_text(size = rel(1.5))
       )
 
-    if (!input$volcano.symbol == volcano.symbol.none){
+    if (!input$volcano_symbol == volcanoSymbolNone){
       gg <- gg +
         geom_text(
-          data = data.NA()[data.NA()[,input$volcano.padj] <= input$FDR,],
-          mapping = aes_string(label = input$volcano.symbol),
+          data = data.NA()[data.NA()[,input$volcano_padj] <= input$FDR,],
+          mapping = aes_string(label = input$volcano_symbol),
           check_overlap = TRUE)
     }
 
@@ -239,19 +241,21 @@ shinyServer(function(input, output, clientData, session) {
   output$QQplot <- renderPlot({
 
     qq.data <- cbind(
-      data.NA()[order(data.NA()[,input$volcano.pval]),],
+      data.NA()[order(data.NA()[,input$volcano_pval]),],
       expected = sort(runif(n = nrow(data.NA()), min = 0, max = 1)))
 
     gg <- ggplot(
       data = qq.data,
       mapping = aes_string(
           x = "-log10(expected)",
-          y = paste("-log10(",input$volcano.pval,")", sep = ""))) +
+          y = paste("-log10(",input$volcano_pval,")", sep = ""))) +
       geom_point(
-        colour = as.numeric(qq.data[,input$volcano.padj] <= input$FDR) + 1,
+        colour = as.numeric(qq.data[,input$volcano_padj] <= input$FDR) + 1,
         size = 2) +
       geom_abline(slope = 1, intercept = 0, colour = "red") +
-      ggtitle("QQ plot") +
+      ggtitle(paste(
+        "Quantile-Quantile Plot",
+        input$dataset_name, sep = "\n")) +
       xlab(
         expression(
           Expected*" "*"-"*log[10]*" ( unadjusted "*italic(P)*"-"*value*")")
@@ -263,17 +267,17 @@ shinyServer(function(input, output, clientData, session) {
       scale_x_continuous(
         limits = range(-log10(qq.data[,"expected"]) * 1.05)) +
       scale_y_continuous(
-        limits = range(-log10(qq.data[,input$volcano.pval]) * 1.05)) +
+        limits = range(-log10(qq.data[,input$volcano_pval]) * 1.05)) +
       theme(
         axis.text = element_text(size = rel(1.25)),
         title = element_text(size = rel(1.5))
         )
 
-    if (!input$volcano.symbol == volcano.symbol.none){
+    if (!input$volcano_symbol == volcanoSymbolNone){
       gg <- gg +
         geom_text(
-          data = qq.data[qq.data[,input$volcano.padj] <= input$FDR,],
-          mapping = aes_string(label = input$volcano.symbol),
+          data = qq.data[qq.data[,input$volcano_padj] <= input$FDR,],
+          mapping = aes_string(label = input$volcano_symbol),
           check_overlap = TRUE)
     }
 

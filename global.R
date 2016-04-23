@@ -3,5 +3,5 @@ library(shiny)
 library(DT)
 library(ggplot2)
 
-volcano.symbol.none <- "None"
+volcanoSymbolNone <- "None"
 randomDatasetName <- "Random generated data"

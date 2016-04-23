@@ -82,17 +82,17 @@ shinyUI(navbarPage(
         ),
         
         selectInput(
-          "volcano.logFC",
+          "volcano_logFC",
           "Column for logFC",
           choices = c()),
         
         selectInput(
-          "volcano.pval",
+          "volcano_pval",
           "Column for P-value",
           choices = c()),
         
         selectInput(
-          "volcano.padj",
+          "volcano_padj",
           "Column for adjusted P-value",
           choices = c()),
         
@@ -105,7 +105,7 @@ shinyUI(navbarPage(
           step = 0.01),
         
         selectInput(
-          "volcano.symbol",
+          "volcano_symbol",
           "Column for gene symbol",
           choices = c())
         ),
