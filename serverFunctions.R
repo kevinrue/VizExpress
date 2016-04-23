@@ -1,5 +1,5 @@
 # Random data set before CSV is provided
-randomDatasetName <- "Randomly generated data"
+
 randomDataDiff <- function(){
   log2FC <- rnorm(n = 10E3, mean = 0, sd = 1)
   log2FC <- log2FC[order(abs(log2FC), decreasing = TRUE)]

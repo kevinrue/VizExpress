@@ -35,6 +35,11 @@ shinyServer(function(input, output, clientData, session) {
       selected = symbol.default()
     )
     
+    updateTextInput(
+      session, "dataset_name",
+      value = single.datasetName()
+    )
+    
   })
 
   single.datasetName <- callModule(

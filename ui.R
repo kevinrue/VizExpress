@@ -52,8 +52,13 @@ shinyUI(navbarPage(
         )
       ),
       column(
-        h3("Data set:"),
-        textOutput("datasetName"),
+        h3("Data set"),
+        textInput(
+          "dataset_name",
+          label = "Name",
+          value = randomDatasetName,
+          placeholder = "Dataset name"
+        ),
         width = 9
       )
     ),
