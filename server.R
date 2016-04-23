@@ -73,7 +73,7 @@ shinyServer(function(input, output, clientData, session) {
     if (length(FC.colname) == 0){
       sumMinMax <- lapply(
         X = data.NA()[,data.numCols()],
-        FUN = function(x){sum(range(single.rawdata()))})
+        FUN = function(x){sum(x, na.rm = TRUE)})
       FC.colname <- colnames(single.rawdata())[which.min(sumMinMax)]
     }
 
