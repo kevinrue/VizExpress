@@ -48,7 +48,7 @@ setSingleDataset <- function(input, output, session, stringsAsFactors) {
   userFile <-  reactive({ input$file })
   
   # The user's data, parsed into a data frame
-  dataframe <- reactive({
+  datasetName <- reactive({
     
     # Return a random data frame if no file was uploaded yet
     if (is.null(userFile())){
@@ -60,5 +60,5 @@ setSingleDataset <- function(input, output, session, stringsAsFactors) {
   })
   
   # Return the reactive that yields the data frame
-  return(dataframe)
+  return(datasetName)
 }
