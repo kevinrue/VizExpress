@@ -9,10 +9,13 @@ randomDataDiff <- function(){
   )
   Pvalue <- Pvalue[order(Pvalue)]
   
+  baseMean <- 2^runif(n = 10E3, min = 6, max = 14)
+  
   padj <- p.adjust(p = Pvalue, method = "BH")
   SYMBOL <- paste("Gene", sprintf("%04.0f", 1:1000), sep = "_")
   
   data.frame(
+    baseMean = baseMean,
     log2FC = log2FC,
     Pvalue = Pvalue,
     padj = padj,
@@ -21,6 +24,8 @@ randomDataDiff <- function(){
   )
   
 }
+
+# Import data from a single CSV file
 
 readSingleFile <- function(input, output, session, stringsAsFactors) {
   # The selected file, if any
@@ -43,6 +48,8 @@ readSingleFile <- function(input, output, session, stringsAsFactors) {
   return(dataframe)
 }
 
+# Define data set name from a single CSV file
+
 setSingleDataset <- function(input, output, session, stringsAsFactors) {
   # The selected file, if any
   userFile <-  reactive({ input$file })
@@ -62,3 +69,7 @@ setSingleDataset <- function(input, output, session, stringsAsFactors) {
   # Return the reactive that yields the data frame
   return(datasetName)
 }
+
+# Define plotting colours (max. )
+NA.col <- brewer.pal(n = 9, name = "Greys")[5]
+sigNon.colours <- c(NA.col, "#FF0000")

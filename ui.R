@@ -107,13 +107,27 @@ shinyUI(navbarPage(
         selectInput(
           "volcano_symbol",
           "Column for gene symbol",
-          choices = c())
+          choices = c()),
+        
+        selectInput(
+          "ma_mean",
+          "Column for mean signal",
+          choices = c()),
+        
+        checkboxInput(
+          "logMean",
+          expression("Apply log2 to mean?"),
+          value = TRUE
+        )
+        
         ),
       
       mainPanel(
         plotOutput("volcanoPlot"),
         tags$hr(),
         plotOutput("QQplot"),
+        tags$hr(),
+        plotOutput("MAplot"),
         width = 5
         )
       )

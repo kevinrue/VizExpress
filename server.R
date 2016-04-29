@@ -40,6 +40,12 @@ shinyServer(function(input, output, clientData, session) {
       value = single.datasetName()
     )
     
+    updateSelectInput(
+      session, "ma_mean",
+      choices = data.numCols(),
+      selected = mean.default()
+    )
+    
   })
 
   single.datasetName <- callModule(
@@ -180,6 +186,25 @@ shinyServer(function(input, output, clientData, session) {
     symbol.colname
 
   })
+  
+  mean.default <- reactive({
+    
+    # Guess logFC column by name
+    mean.colname <- colnames(single.rawdata())[grep(
+      pattern = "(base)?mean|av(era)?g(e)?", # (log)?[[:digit:]]*f(old)?c(change)?
+      x = tolower(colnames(single.rawdata())))[1]]
+    # Otherwise, assume logFC column is the one with the largest positive values
+    if (length(mean.colname) == 0){
+      sum <- lapply(
+        X = data.NA()[,data.numCols()],
+        FUN = function(x){sum(x, na.rm = TRUE)})
+      mean.colname <- colnames(single.rawdata())[which.max(sumMinMax)]
+    }
+    
+    message("mean.colname:", mean.colname)
+    mean.colname
+    
+  })
 
   data.NA <- reactive({
 
@@ -213,7 +238,8 @@ shinyServer(function(input, output, clientData, session) {
         x = input$volcano_logFC,
         y = paste("-log10(",input$volcano_pval,")", sep = ""))) +
       geom_point(
-        colour = as.numeric(data.NA()[,input$volcano_padj] <= input$FDR) + 1,
+        colour = sigNon.colours[
+          as.numeric(data.NA()[,input$volcano_padj] <= input$FDR) + 1],
         size = 2) +
       ggtitle(paste(
         "Volcano plot",
@@ -250,7 +276,8 @@ shinyServer(function(input, output, clientData, session) {
           x = "-log10(expected)",
           y = paste("-log10(",input$volcano_pval,")", sep = ""))) +
       geom_point(
-        colour = as.numeric(qq.data[,input$volcano_padj] <= input$FDR) + 1,
+        colour = sigNon.colours[
+          as.numeric(data.NA()[,input$volcano_padj] <= input$FDR) + 1],
         size = 2) +
       geom_abline(slope = 1, intercept = 0, colour = "red") +
       ggtitle(paste(
@@ -283,6 +310,48 @@ shinyServer(function(input, output, clientData, session) {
 
     gg
 
+  })
+  
+  output$MAplot <- renderPlot({
+    
+    ma.data <- cbind(data.NA())
+    
+    if (input$logMean){
+      ma.data[,input$ma_mean] <- log2(data.NA()[,input$ma_mean])
+      meanLabel <- expression(log[2]*" (mean signal)")
+    } else {
+      meanLabel <- "Mean signal"
+    }
+
+    gg <- ggplot(
+      data = ma.data,
+      mapping = aes_string(
+        x = input$ma_mean,
+        y = input$volcano_logFC)) +
+      geom_point(
+        colour = sigNon.colours[
+          as.numeric(data.NA()[,input$volcano_padj] <= input$FDR) + 1],
+        size = 2) +
+      ggtitle(paste(
+        "Minus-Average Plot",
+        input$dataset_name, sep = "\n")) +
+      xlab(meanLabel) +
+      ylab("log (fold-change)") +
+      theme(
+        axis.text = element_text(size = rel(1.25)),
+        title = element_text(size = rel(1.5))
+      )
+    
+    if (!input$volcano_symbol == volcanoSymbolNone){
+      gg <- gg +
+        geom_text(
+          data = ma.data[ma.data[,input$volcano_padj] <= input$FDR,],
+          mapping = aes_string(label = input$volcano_symbol),
+          check_overlap = TRUE)
+    }
+    
+    gg
+    
   })
 
 })
