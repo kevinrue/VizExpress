@@ -104,6 +104,35 @@ shinyUI(navbarPage(
           value = 0.05,
           step = 0.01),
         
+        radioButtons(
+          "FC_input",
+          label = "Fold-change cutoff",
+          choices = list(
+            "Fold-change" = 1,
+            "Log fold-change" = 2), 
+          selected = 2),
+        
+        conditionalPanel(
+          "input.FC_input == 1",
+          sliderInput(
+            "fold_change",
+            "Fold-change:",
+            min = 1,
+            max = 1024,
+            value = 1.5,
+            step = 0.5)
+        ),
+        
+        conditionalPanel(
+          "input.FC_input == 2",
+          numericInput(
+            "log_fold_change",
+            "Log2 fold-change:",
+            min = 1,
+            max = 10,
+            value = 0.5849625)
+        ),
+        
         selectInput(
           "volcano_symbol",
           "Column for gene symbol",

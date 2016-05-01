@@ -70,6 +70,9 @@ setSingleDataset <- function(input, output, session, stringsAsFactors) {
   return(datasetName)
 }
 
-# Define plotting colours (max. )
+# Define plotting colours
 NA.col <- brewer.pal(n = 9, name = "Greys")[5]
 sigNon.colours <- c(NA.col, "#FF0000")
+
+# Up / Down / NonSig colours
+UpDownNot.col <- brewer.pal(n = 9, name = "Set1")[c(3, 9, 1)]

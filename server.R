@@ -314,24 +314,50 @@ shinyServer(function(input, output, clientData, session) {
   
   output$MAplot <- renderPlot({
     
-    ma.data <- cbind(data.NA())
-    
+    ma.data <- data.NA()
+
+    # Log2 the X values if required
     if (input$logMean){
-      ma.data[,input$ma_mean] <- log2(data.NA()[,input$ma_mean])
+      ma.data[,input$ma_mean] <- log2(ma.data[,input$ma_mean])
       meanLabel <- expression(log[2]*" (mean signal)")
     } else {
       meanLabel <- "Mean signal"
     }
+    
+    # Find points passing cutoffs (FDR; logFC)
+    if (input$FC_input == 2){
+      tmp.FC <- sign(trunc(
+        ma.data[,input$volcano_logFC] / input$log_fold_change))
+      yline <- input$log_fold_change
+    } else if (input$FC_input == 1) {
+      tmp.FC <- sign(trunc(
+        ma.data[,input$volcano_logFC] / log2(input$fold_change)))
+      yline <- log2(input$fold_change)
+    }
+    # tmp.FC <- sign(round(
+    #   ma.data[,input$volcano_logFC] / log2(input$fold_change)))
+    print(table(tmp.FC))
+    tmp.FDR <- as.numeric(ma.data[,input$volcano_padj] <= input$FDR)
+    print(table(tmp.FDR))
+    ma.data$col.idx <- 2 + tmp.FC * tmp.FDR
+    print(table(ma.data$col.idx))
+    ma.data$Colour <- UpDownNot.col[ma.data$col.idx]
+    print(table(ma.data$Colour))
+    
+    ma.data$alpha <- c(0.25, 0.75)[1 + ma.data$col.idx %% 2]
 
+    print(ma.data[1,])
     gg <- ggplot(
       data = ma.data,
       mapping = aes_string(
         x = input$ma_mean,
         y = input$volcano_logFC)) +
       geom_point(
-        colour = sigNon.colours[
-          as.numeric(data.NA()[,input$volcano_padj] <= input$FDR) + 1],
-        size = 2) +
+        mapping = aes(colour = Colour, alpha = alpha),
+        size = 2
+        ) +
+      geom_hline(yintercept = yline, colour = UpDownNot.col[3]) +
+      geom_hline(yintercept = -yline, colour = UpDownNot.col[1]) +
       ggtitle(paste(
         "Minus-Average Plot",
         input$dataset_name, sep = "\n")) +
@@ -340,12 +366,14 @@ shinyServer(function(input, output, clientData, session) {
       theme(
         axis.text = element_text(size = rel(1.25)),
         title = element_text(size = rel(1.5))
-      )
+      ) +
+      guides(colour = "none", alpha = "none") +
+      scale_colour_manual(values = UpDownNot.col)
     
     if (!input$volcano_symbol == volcanoSymbolNone){
       gg <- gg +
         geom_text(
-          data = ma.data[ma.data[,input$volcano_padj] <= input$FDR,],
+          data = ma.data[(ma.data$col.idx %% 2) != 0,],
           mapping = aes_string(label = input$volcano_symbol),
           check_overlap = TRUE)
     }
