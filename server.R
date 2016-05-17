@@ -8,44 +8,44 @@
 source("serverFunctions.R")
 
 shinyServer(function(input, output, clientData, session) {
-  
+
   observe({
-    
+
     updateSelectInput(
       session, "volcano_logFC",
       choices = data.numCols(),
       selected = FC.default()
     )
-    
+
     updateSelectInput(
       session, "volcano_pval",
       choices = data.numCols(),
       selected = pval.default()
     )
-    
+
     updateSelectInput(
       session, "volcano_padj",
       choices = data.numCols(),
       selected = padj.default()
     )
-    
+
     updateSelectInput(
       session, "volcano_symbol",
       choices = c(volcanoSymbolNone, data.charCols()),
       selected = symbol.default()
     )
-    
+
     updateTextInput(
       session, "dataset_name",
       value = single.datasetName()
     )
-    
+
     updateSelectInput(
       session, "ma_mean",
       choices = data.numCols(),
       selected = mean.default()
     )
-    
+
   })
 
   single.datasetName <- callModule(
@@ -58,9 +58,21 @@ shinyServer(function(input, output, clientData, session) {
 
   })
 
-  single.rawdata <- callModule(
-      readSingleFile, "input_file",
+  single.rawdata <- reactive({
+
+    validate(
+      need(input$input_file, label = "CSV file"),
+      need(input$CsvSep, label = "Field separator"))
+
+    read.csv(
+      file = input$input_file$datapath,
+      sep = input$CsvSep,
       stringsAsFactors = FALSE)
+  })
+
+  # single.rawdata <- callModule(
+  #     readSingleFile, "input_file",
+  #     stringsAsFactors = FALSE)
 
   data.numCols <- reactive({
 
@@ -186,9 +198,9 @@ shinyServer(function(input, output, clientData, session) {
     symbol.colname
 
   })
-  
+
   mean.default <- reactive({
-    
+
     # Guess logFC column by name
     mean.colname <- colnames(single.rawdata())[grep(
       pattern = "(base)?mean|av(era)?g(e)?", # (log)?[[:digit:]]*f(old)?c(change)?
@@ -200,10 +212,10 @@ shinyServer(function(input, output, clientData, session) {
         FUN = function(x){sum(x, na.rm = TRUE)})
       mean.colname <- colnames(single.rawdata())[which.max(sumMinMax)]
     }
-    
+
     message("mean.colname:", mean.colname)
     mean.colname
-    
+
   })
 
   data.NA <- reactive({
@@ -311,9 +323,9 @@ shinyServer(function(input, output, clientData, session) {
     gg
 
   })
-  
+
   output$MAplot <- renderPlot({
-    
+
     ma.data <- data.NA()
 
     # Log2 the X values if required
@@ -323,7 +335,7 @@ shinyServer(function(input, output, clientData, session) {
     } else {
       meanLabel <- "Mean signal"
     }
-    
+
     # Find points passing cutoffs (FDR; logFC)
     if (input$FC_input == 2){
       tmp.FC <- sign(trunc(
@@ -343,7 +355,7 @@ shinyServer(function(input, output, clientData, session) {
     print(table(ma.data$col.idx))
     ma.data$Colour <- UpDownNot.col[ma.data$col.idx]
     print(table(ma.data$Colour))
-    
+
     ma.data$alpha <- c(0.25, 0.75)[1 + ma.data$col.idx %% 2]
 
     print(ma.data[1,])
@@ -369,7 +381,7 @@ shinyServer(function(input, output, clientData, session) {
       ) +
       guides(colour = "none", alpha = "none") +
       scale_colour_manual(values = UpDownNot.col)
-    
+
     if (!input$volcano_symbol == volcanoSymbolNone){
       gg <- gg +
         geom_text(
@@ -377,9 +389,9 @@ shinyServer(function(input, output, clientData, session) {
           mapping = aes_string(label = input$volcano_symbol),
           check_overlap = TRUE)
     }
-    
+
     gg
-    
+
   })
 
 })
